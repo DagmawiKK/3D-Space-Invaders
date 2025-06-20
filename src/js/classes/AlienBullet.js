@@ -1,0 +1,68 @@
+import * as THREE from 'three';
+
+export class AlienBullet {
+    constructor(scene, position, game) {
+        this.scene = scene;
+        this.game = game; // Store game reference
+        this.minY = -30;
+        this.offset = -2;
+        this.bulletSpeed = -0.2;
+        this.disposed = false;
+
+        // Create bullet geometry and material
+        const geometry = new THREE.BoxGeometry(0.5, 3, 1);
+        const material = new THREE.MeshStandardMaterial({
+            map: new THREE.TextureLoader().load('/assets/textures/Alien_1.jpg'),
+            roughness: 0.5,
+            metalness: 0.2
+        });
+        this.mesh = new THREE.Mesh(geometry, material);
+        this.mesh.position.copy(position).add(new THREE.Vector3(0, this.offset, 0));
+        this.mesh.userData = { type: 'alienbullet', parent: this };
+
+        // Random rotation for bullet arc
+        const bulletArc = Math.PI / 6;
+        this.mesh.rotation.z = (Math.random() * bulletArc) - bulletArc / 2;
+
+        this.scene.add(this.mesh);
+    }
+
+    update(delta) {
+        if (this.disposed) return;
+
+        // Move bullet in direction of rotation
+        const moveVector = new THREE.Vector3(0, this.bulletSpeed * delta * 60, 0);
+        moveVector.applyQuaternion(this.mesh.quaternion);
+        this.mesh.position.add(moveVector);
+
+        // Destroy if beyond minY
+        if (this.mesh.position.y < this.minY) {
+            this.destroyBullet();
+        }
+
+        // Collision detection is handled by Game.js via raycasting
+    }
+
+    handleCollision(collidedMesh) {
+        console.log('Bullet collided with:', collidedMesh.userData?.type);
+
+        if (!collidedMesh.userData || !collidedMesh.userData.type) {
+            this.destroyBullet();
+            return;
+        }
+
+        const collidedType = collidedMesh.userData.type;
+
+        if (collidedType === 'player') {
+            collidedMesh.userData.parent?.hit(); // Trigger hit on player
+        } else if (collidedType === 'barrier') {
+            this.game?.onBarrierDestroyed(collidedMesh);
+        }
+        this.destroyBullet(); // Always destroy bullet after collision
+    }
+
+    destroyBullet() {
+        this.scene.remove(this.mesh);
+        this.disposed = true;
+    }
+}
