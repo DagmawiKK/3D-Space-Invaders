@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { Explosion } from './Explosion.js';
 
 export class Alien {
     constructor(scene, position, type, game) {
@@ -23,7 +22,7 @@ export class Alien {
             (gltf) => {
                 this.mesh = gltf.scene;
                 this.mesh.position.copy(this.position);
-                this.mesh.scale.set(0.5, 0.5, 0.5);
+                this.mesh.scale.set(0.5, 0.5, 1);
                 this.mesh.userData = { type: 'alien', parent: this };
 
                 this.scene.add(this.mesh);
@@ -37,7 +36,7 @@ export class Alien {
                     ];
                     if (child.isMesh) {
                         child.material = new THREE.MeshStandardMaterial({
-                            map: new THREE.TextureLoader().load(texturePath[Math.random() * 3 | 0]),
+                            map: new THREE.TextureLoader().load(texturePath[Math.floor(Math.random() * 3)]),
                             roughness: 0.5,
                             metalness: 0.2
                         });
@@ -68,26 +67,28 @@ export class Alien {
 
         // Randomly shoot bullets, but less frequently and staggered
         this.bulletCooldown -= delta;
-        if (this.bulletCooldown <= 0 && Math.random() < 0.002) { // Lower probability (was 0.01)
+        if (this.bulletCooldown <= 0 && Math.random() < 0.002) {
             this.game.spawnAlienBullet(this.mesh.position);
-            // Add random cooldown between 1.5 and 3.5 seconds
             this.bulletCooldown = 1.5 + Math.random() * 2;
         }
     }
 
+    // --- CORRECTED HIT METHOD ---
     hit() {
         this.lives -= 1;
         console.log('Alien hit! Lives left:', this.lives);
+
         if (this.lives <= 0) {
-            new Explosion(this.scene, this.mesh.position, 10, 1);
-            this.scene.remove(this.mesh);
+            // The alien is destroyed. Let the Game class handle the consequences.
             this.game.onAlienDestroyed(this);
-            return true; // Alien destroyed
+            return true; // Return true to indicate it was destroyed.
         } else {
-            // Visual feedback for hit
-            this.mesh.rotation.x += (Math.random() - 0.5) * 0.3;
-            new Explosion(this.scene, this.mesh.position, 5, 0.5); // Smaller explosion for hit
-            return false;
+            // The alien was just hit. Provide visual feedback.
+            // The game class will handle the small impact explosion.
+            if (this.mesh) {
+                this.mesh.rotation.x += (Math.random() - 0.5) * 0.3;
+            }
+            return false; // Return false to indicate it survived.
         }
     }
 }

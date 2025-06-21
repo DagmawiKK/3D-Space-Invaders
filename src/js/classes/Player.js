@@ -18,8 +18,8 @@ export class Player {
             '/assets/models/Player_1.glb',
             (gltf) => {
                 this.mesh = gltf.scene;
-                this.mesh.position.set(0, -20, 0); // Player starts at bottom
-                this.mesh.scale.set(0.5, 0.5, 0.5);
+                this.mesh.position.set(0, -15, 0); // Player starts at bottom
+                this.mesh.scale.set(0.5, 0.5, 1);
                 this.mesh.userData = { type: 'player', parent: this };
                 this.scene.add(this.mesh);
 

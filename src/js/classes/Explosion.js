@@ -60,12 +60,37 @@ export class Explosion {
         });
 
         if (Object.keys(this.particles).length === 0) {
+            if (!this.disposed) {
+                console.log('Explosion disposed');
+            }
             this.disposed = true;
         }
     }
 
-    move(particle, delta) {
+   move(particle, delta) {
         particle.duration -= delta * 60;
+
+        if (particle.duration <= 0) {
+            // Ensure full removal and disposal
+            if (particle.mesh && particle.mesh.parent) {
+                this.scene.remove(particle.mesh); // Remove from scene
+            }
+            if (particle.mesh) {
+                particle.mesh.visible = false; // Hide mesh
+                if (particle.mesh.geometry) {
+                    particle.mesh.geometry.dispose(); // Dispose geometry
+                }
+                if (particle.mesh.material) {
+                    if (Array.isArray(particle.mesh.material)) {
+                        particle.mesh.material.forEach(mat => mat.dispose());
+                    } else {
+                        particle.mesh.material.dispose();
+                    }
+                }
+            }
+            delete this.particles[particle.id]; // Remove from particles object
+            return;
+        }
 
         const progress = 1 - particle.duration / particle.totalDuration;
         const fadeFactor = particle.duration < 40 ? particle.duration / 40 : 1;
@@ -73,15 +98,6 @@ export class Explosion {
 
         particle.mesh.material.opacity = fadeFactor;
         particle.mesh.scale.set(scale, scale, scale);
-
-        if (particle.duration <= 0) {
-            this.scene.remove(particle.mesh);
-            particle.mesh.geometry.dispose();
-            particle.mesh.material.dispose();
-            delete this.particles[particle.id];
-            return;
-        }
-
         particle.mesh.translateOnAxis(particle.movementVector, particle.velocity * delta * 60);
         particle.mesh.rotation.x += particle.rotationVelocity * delta * 60;
         particle.mesh.rotation.y += particle.rotationVelocity * delta * 60;

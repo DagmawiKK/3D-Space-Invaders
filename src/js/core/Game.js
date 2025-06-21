@@ -71,7 +71,7 @@ export class Game {
         for (let row = 0; row < 3; row++) {
             for (let col = 0; col < 5; col++) {
                 const type = types[Math.floor(Math.random() * types.length)];
-                const position = new THREE.Vector3((col - 2) * 5, 10 + row * 3, 0);
+                const position = new THREE.Vector3((col - 2) * 5, 5 + row * 3, 0);
                 const alien = new Alien(this.scene, position, type, this);
                 this.aliens.push(alien);
             }
@@ -89,11 +89,17 @@ export class Game {
     }
 
     onAlienDestroyed(alien) {
+        // Filter the alien out of the main array first
         this.aliens = this.aliens.filter(a => a !== alien);
 
-        // 💥 Large explosion on alien death
-        const explosion = new Explosion(this.scene, alien.mesh.position.clone(), 20, 1);
-        this.explosions.push(explosion);
+        // Now, safely access the mesh for its position BEFORE removing it
+        if (alien.mesh && alien.mesh.position) {
+            const explosion = new Explosion(this.scene, alien.mesh.position.clone(), 20, 1);
+            this.explosions.push(explosion);
+
+            // **ADD THIS LINE:** The Game class now removes the mesh from the scene.
+            this.scene.remove(alien.mesh); 
+        }
 
         if (this.aliens.length === 0 && !this.mothership) {
             this.mothership = new Mothership(this.scene, this);
@@ -116,6 +122,7 @@ export class Game {
         }
         this.gameOver = true;
         console.log('Game Over!');
+        if (window.onGameOver) window.onGameOver();
     }
 
     playSound(soundName) {
@@ -123,18 +130,29 @@ export class Game {
     }
 
     onBarrierDestroyed(barrier) {
-        this.scene.remove(barrier);
+        if (barrier && barrier.parent) {
+            this.scene.remove(barrier);
+        }
     }
 
     update(delta) {
         if (this.gameOver) return;
 
+        // Cap delta to prevent large jumps
+        delta = Math.min(delta, 0.033);
+
         if (this.player) this.player.update(delta);
         this.aliens.forEach(alien => alien.update(delta));
         if (this.mothership) this.mothership.update(delta);
-        this.playerBullets.forEach(bullet => bullet.update(delta));
-        this.alienBullets.forEach(bullet => bullet.update(delta));
-        this.explosions.forEach(explosion => explosion.update(delta));
+        this.playerBullets.forEach(bullet => {
+            if (!bullet.disposed) bullet.update(delta);
+        });
+        this.alienBullets.forEach(bullet => {
+            if (!bullet.disposed) bullet.update(delta);
+        });
+        this.explosions.forEach(explosion => {
+            if (!explosion.disposed) explosion.update(delta);
+        });
 
         this.playerBullets = this.playerBullets.filter(bullet => !bullet.disposed);
         this.alienBullets = this.alienBullets.filter(bullet => !bullet.disposed);
@@ -146,8 +164,8 @@ export class Game {
     checkCollisions() {
         // Player bullets hitting aliens or mothership
         this.playerBullets.forEach(bullet => {
-            if (bullet.disposed || !bullet.mesh) return;
-            const rayLength = 4;
+            if (bullet.disposed || !bullet.mesh || !bullet.mesh.parent) return;
+            const rayLength = 2; // Reduced for precision
             const direction = new THREE.Vector3(0, 1, 0).normalize();
             const raycaster = new THREE.Raycaster(bullet.mesh.position, direction, 0, rayLength);
 
@@ -171,21 +189,27 @@ export class Game {
                 const hitMesh = intersects[0].object;
                 const hitPoint = intersects[0].point;
 
-                // 💥 Small explosion on hit
-                const explosion = new Explosion(this.scene, hitPoint.clone(), 10, 0.7);
-                this.explosions.push(explosion);
+                // Check for existing explosion to avoid overlap
+                const existingExplosion = this.explosions.find(exp =>
+                    exp.position.distanceTo(hitPoint) < 1.0
+                );
+                if (!existingExplosion) {
+                    const explosion = new Explosion(this.scene, hitPoint.clone(), 10, 0.7);
+                    this.explosions.push(explosion);
+                }
 
-                console.log('Hit detected on:', hitMesh.userData?.type, 'at', hitPoint);
-                bullet.handleCollision(hitMesh);
                 bullet.disposed = true;
+                bullet.handleCollision(hitMesh);
             }
         });
 
         // Alien bullets hitting player
         this.alienBullets.forEach(bullet => {
-            if (bullet.disposed || !bullet.mesh) return;
-            const rayLength = 4;
-            const direction = new THREE.Vector3(0, -1, 0).applyQuaternion(bullet.mesh.getWorldQuaternion(new THREE.Quaternion())).normalize();
+            if (bullet.disposed || !bullet.mesh || !bullet.mesh.parent) return;
+            const rayLength = 2; // Reduced for precision
+            const direction = new THREE.Vector3(0, -1, 0).applyQuaternion(
+                bullet.mesh.getWorldQuaternion(new THREE.Quaternion())
+            ).normalize();
             const raycaster = new THREE.Raycaster(bullet.mesh.position, direction, 0, rayLength);
 
             if (this.player && this.player.mesh && this.player.mesh.parent) {
@@ -193,13 +217,16 @@ export class Game {
                 if (intersects.length > 0) {
                     const hitPoint = intersects[0].point;
 
-                    // 💥 Small explosion on player hit
-                    const explosion = new Explosion(this.scene, hitPoint.clone(), 12, 1.2);
-                    this.explosions.push(explosion);
+                    const existingExplosion = this.explosions.find(exp =>
+                        exp.position.distanceTo(hitPoint) < 1.0
+                    );
+                    if (!existingExplosion) {
+                        const explosion = new Explosion(this.scene, hitPoint.clone(), 12, 1.2);
+                        this.explosions.push(explosion);
+                    }
 
-                    console.log('Player hit at:', hitPoint);
-                    bullet.handleCollision(this.player.mesh);
                     bullet.disposed = true;
+                    bullet.handleCollision(this.player.mesh);
                 }
             }
         });
