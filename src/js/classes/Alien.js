@@ -8,7 +8,7 @@ export class Alien {
         this.type = type;
         this.game = game;
         this.mesh = null;
-        this.lives = 1; 
+        this.lives = 3;
         this.speed = 0.01;
         this.direction = 1;
         this.bulletCooldown = 0;
