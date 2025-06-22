@@ -15,7 +15,7 @@ export class Player {
     loadModel() {
         const loader = new GLTFLoader();
         loader.load(
-            '/public/assets/models/Player_1.glb',
+            '/assets/models/Player_1.glb',
             (gltf) => {
                 this.mesh = gltf.scene;
                 this.mesh.position.set(0, -15, 0); 
@@ -26,7 +26,7 @@ export class Player {
                 this.mesh.traverse((child) => {
                     if (child.isMesh) {
                         child.material = new THREE.MeshStandardMaterial({
-                            map: new THREE.TextureLoader().load('/public/assets/textures/player.jpg'),
+                            map: new THREE.TextureLoader().load('/assets/textures/player.jpg'),
                             roughness: 0.5,
                             metalness: 0.2
                         });

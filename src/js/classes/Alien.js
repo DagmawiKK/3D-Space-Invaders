@@ -18,7 +18,7 @@ export class Alien {
     loadModel() {
         const loader = new GLTFLoader();
         loader.load(
-            `/public/assets/models/${this.type}.glb`,
+            `/assets/models/${this.type}.glb`,
             (gltf) => {
                 this.mesh = gltf.scene;
                 this.mesh.position.copy(this.position);
@@ -29,9 +29,9 @@ export class Alien {
 
                 this.mesh.traverse((child) => {
                     let texturePath = [
-                        '/public/assets/textures/Alien_1.jpg',
-                        '/public/assets/textures/Alien_2.jpg',
-                        '/public/assets/textures/Alien_3.jpg'
+                        '/assets/textures/Alien_1.jpg',
+                        '/assets/textures/Alien_2.jpg',
+                        '/assets/textures/Alien_3.jpg'
                     ];
                     if (child.isMesh) {
                         child.material = new THREE.MeshStandardMaterial({
