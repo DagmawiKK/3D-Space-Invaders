@@ -7,9 +7,9 @@ export class Mothership {
         this.scene = scene;
         this.game = game;
         this.mesh = null;
-        this.lives = 5; // Mothership is tougher
+        this.lives = 7; 
         this.speed = 0.1;
-        this.direction = Math.random() > 0.5 ? 1 : -1; // Random start direction
+        this.direction = Math.random() > 0.5 ? 1 : -1; 
         this.bulletCooldown = 0;
         this.loadModel();
     }
@@ -17,15 +17,14 @@ export class Mothership {
     loadModel() {
         const loader = new GLTFLoader();
         loader.load(
-            '/assets/models/Mothership.glb',
+            '/assets/models/MotherShip.glb',
             (gltf) => {
                 this.mesh = gltf.scene;
-                this.mesh.position.set(this.direction * 20, 15, 0); // Start at edge
-                this.mesh.scale.set(1, 1, 1); // Larger scale for mothership
+                this.mesh.position.set(this.direction * 20, 8, 0); 
+                this.mesh.scale.set(1, 1, 1); 
                 this.mesh.userData = { type: 'mothership', lives: this.lives, parent: this };
                 this.scene.add(this.mesh);
 
-                // Apply texture
                 this.mesh.traverse((child) => {
                     if (child.isMesh) {
                         child.material = new THREE.MeshStandardMaterial({
@@ -33,6 +32,8 @@ export class Mothership {
                             roughness: 0.4,
                             metalness: 0.3
                         });
+                        child.userData.type = 'mothership';
+                        child.userData.parent = this;
                     }
                 });
             },
@@ -46,33 +47,41 @@ export class Mothership {
     update(delta) {
         if (!this.mesh) return;
 
-        // Move side to side
         this.mesh.position.x += this.speed * this.direction * delta * 60;
 
-        // Reverse direction at boundaries
         if (Math.abs(this.mesh.position.x) > 20) {
             this.direction *= -1;
         }
 
-        // Randomly shoot bullets
         this.bulletCooldown -= delta;
-        if (this.bulletCooldown <= 0 && Math.random() < 0.02) {
-            this.game.spawnAlienBullet(this.mesh.position);
-            this.bulletCooldown = 1.5; // Shorter cooldown for mothership
+        if (this.bulletCooldown <= 0) {
+            const offset = 2.5; 
+            const posLeft = this.mesh.position.clone().add(new THREE.Vector3(-offset, -2, 0));
+            const posRight = this.mesh.position.clone().add(new THREE.Vector3(offset, -2, 0));
+            if (Math.random() < 0.5) {
+                this.game.spawnAlienBullet(posLeft);
+                this.game.spawnAlienBullet(posRight);
+            }
+            else {
+                this.game.spawnAlienBullet(this.mesh.position.clone().add(new THREE.Vector3(0, -2, 0)));
+            }
+
+            this.bulletCooldown = 1; 
         }
     }
 
     hit() {
         this.lives -= 1;
         if (this.lives <= 0) {
-            new Explosion(this.scene, this.mesh.position, 20, 2); // Larger explosion
+            const explosion = new Explosion(this.scene, this.mesh.position, 20, 2); 
+            this.game.explosions.push(explosion);
             this.scene.remove(this.mesh);
             this.game.onMothershipDestroyed(this);
-            return true; // Mothership destroyed
+            return true;
         } else {
-            // Visual feedback for hit
             this.mesh.rotation.z += (Math.random() - 0.5) * 0.25;
-            new Explosion(this.scene, this.mesh.position, 10, 1); // Smaller explosion
+            const explosion = new Explosion(this.scene, this.mesh.position, 10, 1); 
+            this.game.explosions.push(explosion);
             return false;
         }
     }

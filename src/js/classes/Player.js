@@ -6,7 +6,7 @@ export class Player {
         this.scene = scene;
         this.game = game;
         this.mesh = null;
-        this.speed = 10; // Movement speed
+        this.speed = 9; 
         this.bulletCooldown = 0;
         this.loadModel();
         this.setupControls();
@@ -18,12 +18,11 @@ export class Player {
             '/assets/models/Player_1.glb',
             (gltf) => {
                 this.mesh = gltf.scene;
-                this.mesh.position.set(0, -15, 0); // Player starts at bottom
+                this.mesh.position.set(0, -15, 0); 
                 this.mesh.scale.set(0.5, 0.5, 1);
                 this.mesh.userData = { type: 'player', parent: this };
                 this.scene.add(this.mesh);
 
-                // Apply texture
                 this.mesh.traverse((child) => {
                     if (child.isMesh) {
                         child.material = new THREE.MeshStandardMaterial({
@@ -58,7 +57,6 @@ export class Player {
     update(delta) {
         if (!this.mesh) return;
 
-        // Move left or right based on A/D keys
         if (this.keys.a && this.mesh.position.x > -20) {
             this.mesh.position.x -= this.speed * delta;
         }
@@ -66,7 +64,6 @@ export class Player {
             this.mesh.position.x += this.speed * delta;
         }
 
-        // Shoot bullet on spacebar
         this.bulletCooldown -= delta;
         if (this.keys.space && this.bulletCooldown <= 0) {
             this.game.spawnPlayerBullet(this.mesh.position);

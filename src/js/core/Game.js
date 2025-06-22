@@ -20,6 +20,7 @@ export class Game {
         this.mothership = null;
         this.wave = 0;
         this.gameOver = false;
+        this.score = 0;
 
         this.setupScene().then(() => {
             this.setupControls();
@@ -73,7 +74,7 @@ export class Game {
                 const type = types[Math.floor(Math.random() * types.length)];
                 const position = new THREE.Vector3((col - 2) * 5, 5 + row * 3, 0);
                 const alien = new Alien(this.scene, position, type, this);
-                this.aliens.push(alien);
+                this.aliens.push(alien); 
             }
         }
     }
@@ -89,24 +90,22 @@ export class Game {
     }
 
     onAlienDestroyed(alien) {
-        // Filter the alien out of the main array first
+        this.addScore(30); 
         this.aliens = this.aliens.filter(a => a !== alien);
-
-        // Now, safely access the mesh for its position BEFORE removing it
         if (alien.mesh && alien.mesh.position) {
             const explosion = new Explosion(this.scene, alien.mesh.position.clone(), 20, 1);
             this.explosions.push(explosion);
-
-            // **ADD THIS LINE:** The Game class now removes the mesh from the scene.
-            this.scene.remove(alien.mesh); 
+            this.scene.remove(alien.mesh);
         }
-
+        console.log('Aliens left:', this.aliens.length);
         if (this.aliens.length === 0 && !this.mothership) {
+            console.log('Spawning mothership!');
             this.mothership = new Mothership(this.scene, this);
         }
     }
 
     onMothershipDestroyed() {
+        this.addScore(50);
         if (this.mothership && this.mothership.mesh) {
             const explosion = new Explosion(this.scene, this.mothership.mesh.position.clone(), 30, 2);
             this.explosions.push(explosion);
@@ -135,10 +134,21 @@ export class Game {
         }
     }
 
+    addScore(points) {
+        this.score += points;
+        this.updateScoreDisplay();
+    }
+
+    updateScoreDisplay() {
+        const scoreDiv = document.getElementById('score-display');
+        if (scoreDiv) scoreDiv.textContent = `Score: ${this.score}`;
+        const restartScore = document.getElementById('restart-score');
+        if (restartScore) restartScore.textContent = `Score: ${this.score}`;
+    }
+
     update(delta) {
         if (this.gameOver) return;
 
-        // Cap delta to prevent large jumps
         delta = Math.min(delta, 0.033);
 
         if (this.player) this.player.update(delta);
@@ -162,10 +172,9 @@ export class Game {
     }
 
     checkCollisions() {
-        // Player bullets hitting aliens or mothership
         this.playerBullets.forEach(bullet => {
             if (bullet.disposed || !bullet.mesh || !bullet.mesh.parent) return;
-            const rayLength = 2; // Reduced for precision
+            const rayLength = 2;
             const direction = new THREE.Vector3(0, 1, 0).normalize();
             const raycaster = new THREE.Raycaster(bullet.mesh.position, direction, 0, rayLength);
 
@@ -189,7 +198,6 @@ export class Game {
                 const hitMesh = intersects[0].object;
                 const hitPoint = intersects[0].point;
 
-                // Check for existing explosion to avoid overlap
                 const existingExplosion = this.explosions.find(exp =>
                     exp.position.distanceTo(hitPoint) < 1.0
                 );
@@ -203,10 +211,9 @@ export class Game {
             }
         });
 
-        // Alien bullets hitting player
         this.alienBullets.forEach(bullet => {
             if (bullet.disposed || !bullet.mesh || !bullet.mesh.parent) return;
-            const rayLength = 2; // Reduced for precision
+            const rayLength = 2;
             const direction = new THREE.Vector3(0, -1, 0).applyQuaternion(
                 bullet.mesh.getWorldQuaternion(new THREE.Quaternion())
             ).normalize();

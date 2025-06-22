@@ -71,14 +71,13 @@ export class Explosion {
         particle.duration -= delta * 60;
 
         if (particle.duration <= 0) {
-            // Ensure full removal and disposal
             if (particle.mesh && particle.mesh.parent) {
-                this.scene.remove(particle.mesh); // Remove from scene
+                this.scene.remove(particle.mesh);
             }
             if (particle.mesh) {
-                particle.mesh.visible = false; // Hide mesh
+                particle.mesh.visible = false; 
                 if (particle.mesh.geometry) {
-                    particle.mesh.geometry.dispose(); // Dispose geometry
+                    particle.mesh.geometry.dispose();
                 }
                 if (particle.mesh.material) {
                     if (Array.isArray(particle.mesh.material)) {
@@ -88,7 +87,7 @@ export class Explosion {
                     }
                 }
             }
-            delete this.particles[particle.id]; // Remove from particles object
+            delete this.particles[particle.id]; 
             return;
         }
 

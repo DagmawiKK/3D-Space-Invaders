@@ -9,7 +9,6 @@ export class PlayerBullet {
         this.bulletSpeed = 1.25;
         this.disposed = false;
 
-        // Create bullet geometry and material
         const geometry = new THREE.BoxGeometry(0.5, 4, 1);
         const material = new THREE.MeshStandardMaterial({
             map: new THREE.TextureLoader().load('/assets/textures/player.jpg'),
@@ -24,16 +23,11 @@ export class PlayerBullet {
 
     update(delta) {
         if (this.disposed) return;
-
-        // Move bullet upward
         this.mesh.position.y += this.bulletSpeed * delta * 60;
 
-        // Destroy if beyond maxY
         if (this.mesh.position.y > this.maxY) {
             this.destroyBullet();
         }
-
-        // Collision detection is handled by Game.js via raycasting
     }
 
     handleCollision(collidedMesh) {
@@ -45,23 +39,13 @@ export class PlayerBullet {
         const collidedType = collidedMesh.userData.type;
 
         if (collidedType === 'alien' || collidedType === 'mothership') {
-            // Trigger the hit() method on the parent object (Alien or Mothership)
             collidedMesh.userData.parent?.hit();
-
-            // The explosion logic is now correctly handled in Game.js (`checkCollisions` for impact
-            // and `onAlienDestroyed`/`onMothershipDestroyed` for destruction).
-            // We removed the unmanaged `new Explosion(...)` calls from here.
-
-            // You can still play a sound on impact if you wish.
-            // this.game.playSound('alienExplosion');
-
-            this.destroyBullet(); // Destroy the bullet after it hits something.
+            this.destroyBullet();
 
         } else if (collidedType === 'barrier') {
             this.game.onBarrierDestroyed(collidedMesh);
             this.destroyBullet();
         } else {
-            // If it hits something else unexpected, just destroy the bullet.
             this.destroyBullet();
         }
     }

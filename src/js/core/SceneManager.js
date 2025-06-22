@@ -3,7 +3,7 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { Game } from './Game.js';
-import spaceImg from '../../../assets/textures/space.jpg'; // Place a space.jpg in your textures folder
+import spaceImg from '../../../assets/textures/space.jpg'; 
 
 export class SceneManager {
     constructor() {
@@ -17,49 +17,39 @@ export class SceneManager {
     }
 
     init() {
-        // Setup scene
         this.scene = new THREE.Scene();
         const loader = new THREE.TextureLoader();
         loader.load(spaceImg, texture => {
             this.scene.background = new THREE.Color(0x101020); // Deep space blue
         });
 
-        // Setup camera
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        // Place camera behind and above the player, looking forward
         this.camera.position.set(0, 5, 35); // Z is further back, Y is slightly above
         this.camera.lookAt(0, -15, 0);     // Look slightly down toward the playfield
 
-        // Setup renderer
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.setPixelRatio(window.devicePixelRatio);
         document.getElementById('app').appendChild(this.renderer.domElement);
 
-        // Setup post-processing
         this.composer = new EffectComposer(this.renderer);
         const renderPass = new RenderPass(this.scene, this.camera);
         this.composer.addPass(renderPass);
 
-        // Add bloom effect
         const bloomPass = new UnrealBloomPass(
             new THREE.Vector2(window.innerWidth, window.innerHeight),
-            0.5, // Strength
-            0.4, // Radius
-            0.85 // Threshold
+            0.5, 
+            0.4, 
+            0.85 
         );
         this.composer.addPass(bloomPass);
 
-        // Initialize game
         this.game = new Game(this.scene, this.camera, this.renderer);
 
-        // Add stars to the scene
         this.addStars();
 
-        // Handle window resize
         window.addEventListener('resize', () => this.onWindowResize());
 
-        // Start animation loop
         this.animate();
     }
 
