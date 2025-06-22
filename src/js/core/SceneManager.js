@@ -3,7 +3,7 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { Game } from './Game.js';
-import spaceImg from '../../../assets/textures/space.jpg'; 
+import spaceImg from '../../../public/assets/textures/space.jpg'; 
 
 export class SceneManager {
     constructor() {

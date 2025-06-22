@@ -11,7 +11,7 @@ export class PlayerBullet {
 
         const geometry = new THREE.BoxGeometry(0.5, 4, 1);
         const material = new THREE.MeshStandardMaterial({
-            map: new THREE.TextureLoader().load('/assets/textures/player.jpg'),
+            map: new THREE.TextureLoader().load('/public/assets/textures/player.jpg'),
             roughness: 0.5,
             metalness: 0.2
         });

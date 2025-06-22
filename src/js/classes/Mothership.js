@@ -17,7 +17,7 @@ export class Mothership {
     loadModel() {
         const loader = new GLTFLoader();
         loader.load(
-            '/assets/models/MotherShip.glb',
+            '/public/assets/models/MotherShip.glb',
             (gltf) => {
                 this.mesh = gltf.scene;
                 this.mesh.position.set(this.direction * 20, 8, 0); 
@@ -28,7 +28,7 @@ export class Mothership {
                 this.mesh.traverse((child) => {
                     if (child.isMesh) {
                         child.material = new THREE.MeshStandardMaterial({
-                            map: new THREE.TextureLoader().load('/assets/textures/Mothership.jpg'),
+                            map: new THREE.TextureLoader().load('/public/assets/textures/Mothership.jpg'),
                             roughness: 0.4,
                             metalness: 0.3
                         });
